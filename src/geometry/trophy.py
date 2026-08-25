@@ -2,11 +2,6 @@ import numpy as np
 import trimesh
 from pathlib import Path
 
-
-# ------------------------------------------------------------
-# CYLINDER BETWEEN TWO POINTS
-# ------------------------------------------------------------
-
 def cylinder_between_points(
     start,
     end,
@@ -38,11 +33,6 @@ def cylinder_between_points(
 
     return mesh
 
-
-# ------------------------------------------------------------
-# CREATE THE MAIN OPEN TROPHY BODY
-# ------------------------------------------------------------
-
 def create_trophy_body(
     height=3.0,
     bottom_radius=0.58,
@@ -60,7 +50,6 @@ def create_trophy_body(
     vertices = []
     faces = []
 
-    # Keep the same partial circumference / overall shape
     start_angle = np.radians(38)
     end_angle = np.radians(322)
 
@@ -69,30 +58,22 @@ def create_trophy_body(
         end_angle,
         sections
     )
-
-    # --------------------------------------------------------
-    # OUTER SURFACE
-    # --------------------------------------------------------
-
+    
     for level in range(levels):
 
         t = level / (levels - 1)
 
         z = t * height
 
-        # KEEP your original widening shape
         radius = (
             bottom_radius * (1 - t)
             + top_radius * t
         )
 
-        # KEEP your original slight curve
         radius += 0.06 * np.sin(t * np.pi)
 
-        # KEEP your original sideways lean
         center_x = -0.28 * t
 
-        # KEEP your original top shape
         opening_shift = 0.30 * t
 
         for angle in angles:
@@ -111,10 +92,6 @@ def create_trophy_body(
                 z_actual
             ])
 
-    # --------------------------------------------------------
-    # CONNECT OUTER SURFACE
-    # --------------------------------------------------------
-
     for level in range(levels - 1):
 
         current = level * sections
@@ -131,30 +108,19 @@ def create_trophy_body(
             faces.append([a, b, d])
             faces.append([a, d, c])
 
-    # --------------------------------------------------------
-    # FILL THE OPEN SIDE WITH A STRAIGHT WALL
-    # --------------------------------------------------------
-
     for level in range(levels - 1):
 
         current = level * sections
         nxt = (level + 1) * sections
 
-        # One edge of opening
         a = current
         b = nxt
 
-        # Other edge of opening
         c = current + sections - 1
         d = nxt + sections - 1
 
-        # Two triangles make a flat wall
         faces.append([a, b, d])
         faces.append([a, d, c])
-
-    # --------------------------------------------------------
-    # FILL BOTTOM
-    # --------------------------------------------------------
 
     bottom_center_index = len(vertices)
 
@@ -172,19 +138,12 @@ def create_trophy_body(
             i
         ])
 
-    # Close across missing section
     faces.append([
         bottom_center_index,
         0,
         sections - 1
     ])
-
-    # --------------------------------------------------------
-    # FILL TOP
-    # --------------------------------------------------------
-
-    t = 1.0
-
+    
     top_center_x = -0.28
 
     top_center_index = len(vertices)
@@ -205,16 +164,11 @@ def create_trophy_body(
             top_start + i + 1
         ])
 
-    # Close across missing section
     faces.append([
         top_center_index,
         top_start + sections - 1,
         top_start
     ])
-
-    # --------------------------------------------------------
-    # CREATE MESH
-    # --------------------------------------------------------
 
     mesh = trimesh.Trimesh(
         vertices=np.array(vertices),
@@ -224,19 +178,16 @@ def create_trophy_body(
 
     return mesh
 
-
-# ------------------------------------------------------------
-# COMPLETE TROPHY
-# ------------------------------------------------------------
-
-def generate_trophy():
-
-    # ========================================================
-    # LOWER BASE
-    # ========================================================
-
-    lower_base_radius = 1.25
-    lower_base_height = 0.18
+def generate_trophy(
+    ball_radius=0.88,
+    body_height=2.85,
+    body_bottom_radius=0.55,
+    body_top_radius=0.86,
+    lower_base_radius=1.25,
+    lower_base_height=0.18,
+    upper_base_radius=1.02,
+    upper_base_height=0.16,
+):
 
     lower_base = trimesh.creation.cylinder(
         radius=lower_base_radius,
@@ -250,13 +201,6 @@ def generate_trophy():
         lower_base_height / 2
     ])
 
-    # ========================================================
-    # UPPER BASE
-    # ========================================================
-
-    upper_base_radius = 1.02
-    upper_base_height = 0.16
-
     upper_base = trimesh.creation.cylinder(
         radius=upper_base_radius,
         height=upper_base_height,
@@ -269,18 +213,15 @@ def generate_trophy():
         lower_base_height + upper_base_height / 2
     ])
 
-    base_top = lower_base_height + upper_base_height
-
-    # ========================================================
-    # MAIN BODY
-    # ========================================================
-
-    body_height = 2.85
+    base_top = (
+        lower_base_height
+        + upper_base_height
+    )
 
     body = create_trophy_body(
         height=body_height,
-        bottom_radius=0.55,
-        top_radius=0.86,
+        bottom_radius=body_bottom_radius,
+        top_radius=body_top_radius,
         sections=96,
         levels=35,
     )
@@ -291,16 +232,7 @@ def generate_trophy():
         base_top
     ])
 
-    # ========================================================
-    # TOP RIM
-    # ========================================================
-
-    #
-    # The real trophy has a thin horizontal lip underneath
-    # the basketball.
-    #
-    
-    rim_radius = 0.86
+    rim_radius = body_top_radius
     rim_height = 0.07
 
     rim = trimesh.creation.cylinder(
@@ -310,8 +242,6 @@ def generate_trophy():
     )
 
     rim_x = -0.28
-    
-    ball_x = -0.90
 
     rim_z = (
         base_top
@@ -324,10 +254,6 @@ def generate_trophy():
         0,
         rim_z
     ])
-
-    # ========================================================
-    # SMALL NECK UNDER BALL
-    # ========================================================
 
     neck_height = 0.20
     neck_radius = 0.17
@@ -346,16 +272,10 @@ def generate_trophy():
     )
 
     neck.apply_translation([
-        ball_x,
+        0.90,
         0,
         neck_z
     ])
-
-    # ========================================================
-    # BASKETBALL
-    # ========================================================
-
-    ball_radius = 0.88
 
     ball_z = (
         base_top
@@ -371,14 +291,10 @@ def generate_trophy():
     )
 
     ball.apply_translation([
-        ball_x,
+        0.90,
         0,
         ball_z
     ])
-
-    # ========================================================
-    # COMBINE EVERYTHING
-    # ========================================================
 
     trophy = trimesh.util.concatenate([
         lower_base,
@@ -391,27 +307,180 @@ def generate_trophy():
 
     return trophy
 
-
-# ------------------------------------------------------------
-# EXPORT
-# ------------------------------------------------------------
-
 if __name__ == "__main__":
+    ball_radius_values = [
+        0.70,
+        0.80,
+        0.88,  # original
+        1.00,
+        1.10,
+        1.20,
+    ]
 
-    output_dir = Path("outputs")
-    output_dir.mkdir(exist_ok=True)
+    body_height_values = [
+        2.30,
+        2.55,
+        2.70,
+        2.85,  # original
+        3.00,
+        3.20,
+        3.40,
+    ]
 
-    trophy = generate_trophy()
+    body_bottom_radius_values = [
+        0.40,
+        0.45,
+        0.50,
+        0.55,  # original
+        0.60,
+        0.65,
+        0.70,
+    ]
 
-    output_path = (
-        output_dir
-        / "larry_obrien_trophy.obj"
-    )
+    body_top_radius_values = [
+        0.65,
+        0.75,
+        0.80,
+        0.86,  # original
+        0.95,
+        1.05,
+        1.15,
+    ]
 
-    trophy.export(output_path)
+    lower_base_radius_values = [
+        0.95,
+        1.10,
+        1.20,
+        1.25,  # original
+        1.35,
+        1.50,
+        1.65,
+    ]
 
-    print(
-        f"Saved trophy to: {output_path}"
-    )
+    lower_base_height_values = [
+        0.10,
+        0.14,
+        0.18,  # original
+        0.22,
+        0.26,
+        0.30,
+    ]
 
-    trophy.show()
+    upper_base_radius_values = [
+        0.80,
+        0.90,
+        1.00,
+        1.02,  # original
+        1.10,
+        1.20,
+        1.30,
+    ]
+
+    upper_base_height_values = [
+        0.08,
+        0.12,
+        0.16,  # original
+        0.20,
+        0.24,
+        0.28,
+    ]
+
+    for i, radius in enumerate(ball_radius_values):        
+        output_dir = Path("outputs/parameter_tests/ball_radius")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        trophy = generate_trophy(
+            ball_radius=radius
+        )
+
+        output_path = (output_dir / f"ball_radius_{i}_{radius:.2f}.obj")
+
+        trophy.export(output_path)
+
+        print(f"Saved: {output_path}")
+    
+    for i, bheight in enumerate(body_height_values):        
+        output_dir = Path("outputs/parameter_tests/body_height")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        trophy = generate_trophy(
+            body_height=bheight
+        )
+
+        output_path = (output_dir / f"body_height_{i}_{bheight:.2f}.obj")
+
+        trophy.export(output_path)
+
+        print(f"Saved: {output_path}")
+    
+    for i, bbottom_radius in enumerate(body_bottom_radius_values):        
+        output_dir = Path("outputs/parameter_tests/body_bottom_radius")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        trophy = generate_trophy(body_bottom_radius=bbottom_radius)
+
+        output_path = (output_dir / f"body_bottom_radius_{i}_{bbottom_radius:.2f}.obj")
+
+        trophy.export(output_path)
+
+        print(f"Saved: {output_path}")
+    
+    for i, btop_radius in enumerate(body_top_radius_values):        
+            output_dir = Path("outputs/parameter_tests/body_top_radius")
+            output_dir.mkdir(parents=True, exist_ok=True)
+    
+            trophy = generate_trophy(body_top_radius=btop_radius)
+    
+            output_path = (output_dir / f"body_top_radius_{i}_{btop_radius:.2f}.obj")
+    
+            trophy.export(output_path)
+    
+            print(f"Saved: {output_path}")
+    
+    for i, lbottom_radius in enumerate(lower_base_radius_values):        
+            output_dir = Path("outputs/parameter_tests/lower_base_radius")
+            output_dir.mkdir(parents=True, exist_ok=True)
+    
+            trophy = generate_trophy(lower_base_radius=lbottom_radius)
+    
+            output_path = (output_dir / f"lower_base_radius_{i}_{lbottom_radius:.2f}.obj")
+    
+            trophy.export(output_path)
+    
+            print(f"Saved: {output_path}")
+    
+    for i, lbottom_height in enumerate(lower_base_height_values):        
+            output_dir = Path("outputs/parameter_tests/lower_base_height")
+            output_dir.mkdir(parents=True, exist_ok=True)
+    
+            trophy = generate_trophy(lower_base_height=lbottom_height)
+    
+            output_path = (output_dir / f"lower_base_height_{i}_{lbottom_height:.2f}.obj")
+    
+            trophy.export(output_path)
+    
+            print(f"Saved: {output_path}")
+    
+    for i, ubase_radius in enumerate(upper_base_radius_values):        
+            output_dir = Path("outputs/parameter_tests/upper_base_radius")
+            output_dir.mkdir(parents=True, exist_ok=True)
+    
+            trophy = generate_trophy(upper_base_radius=ubase_radius)
+    
+            output_path = (output_dir / f"upper_base_radius_{i}_{ubase_radius:.2f}.obj")
+    
+            trophy.export(output_path)
+    
+            print(f"Saved: {output_path}")
+    
+    for i, ubase_height in enumerate(upper_base_height_values):        
+            output_dir = Path("outputs/parameter_tests/upper_base_height")
+            output_dir.mkdir(parents=True, exist_ok=True)
+    
+            trophy = generate_trophy(upper_base_height=ubase_height)
+    
+            output_path = (output_dir / f"upper_base_height_{i}_{ubase_height:.2f}.obj")
+    
+            trophy.export(output_path)
+    
+            print(f"Saved: {output_path}")
