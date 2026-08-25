@@ -178,133 +178,36 @@ def create_trophy_body(
 
     return mesh
 
-def generate_trophy(
-    ball_radius=0.88,
-    body_height=2.85,
-    body_bottom_radius=0.55,
-    body_top_radius=0.86,
-    lower_base_radius=1.25,
-    lower_base_height=0.18,
-    upper_base_radius=1.02,
-    upper_base_height=0.16,
-):
+def generate_trophy(ball_radius=0.88, body_height=2.85, body_bottom_radius=0.55, body_top_radius=0.86, lower_base_radius=1.25, lower_base_height=0.18, upper_base_radius=1.02, upper_base_height=0.16):
+    lower_base = trimesh.creation.cylinder(radius=lower_base_radius, height=lower_base_height, sections=96)
+    lower_base.apply_translation([0, 0, lower_base_height / 2])
 
-    lower_base = trimesh.creation.cylinder(
-        radius=lower_base_radius,
-        height=lower_base_height,
-        sections=96,
-    )
+    upper_base = trimesh.creation.cylinder(radius=upper_base_radius, height=upper_base_height, sections=96)
+    upper_base.apply_translation([0, 0, lower_base_height + upper_base_height / 2])
 
-    lower_base.apply_translation([
-        0,
-        0,
-        lower_base_height / 2
-    ])
+    base_top = lower_base_height + upper_base_height
 
-    upper_base = trimesh.creation.cylinder(
-        radius=upper_base_radius,
-        height=upper_base_height,
-        sections=96,
-    )
-
-    upper_base.apply_translation([
-        0,
-        0,
-        lower_base_height + upper_base_height / 2
-    ])
-
-    base_top = (
-        lower_base_height
-        + upper_base_height
-    )
-
-    body = create_trophy_body(
-        height=body_height,
-        bottom_radius=body_bottom_radius,
-        top_radius=body_top_radius,
-        sections=96,
-        levels=35,
-    )
-
-    body.apply_translation([
-        0,
-        0,
-        base_top
-    ])
+    body = create_trophy_body(height=body_height, bottom_radius=body_bottom_radius, top_radius=body_top_radius, sections=96, levels=35)
+    body.apply_translation([0, 0, base_top])
 
     rim_radius = body_top_radius
     rim_height = 0.07
-
-    rim = trimesh.creation.cylinder(
-        radius=rim_radius,
-        height=rim_height,
-        sections=96,
-    )
-
+    rim = trimesh.creation.cylinder(radius=rim_radius, height=rim_height, sections=96)
     rim_x = -0.28
-
-    rim_z = (
-        base_top
-        + body_height
-        + rim_height / 2
-    )
-
-    rim.apply_translation([
-        rim_x,
-        0,
-        rim_z
-    ])
+    rim_z = base_top + body_height + rim_height / 2
+    rim.apply_translation([rim_x, 0, rim_z])
 
     neck_height = 0.20
     neck_radius = 0.17
+    neck = trimesh.creation.cylinder(radius=neck_radius, height=neck_height, sections=64)
+    neck_z = base_top + body_height + rim_height + neck_height / 2
+    neck.apply_translation([-0.90, 0, neck_z])
 
-    neck = trimesh.creation.cylinder(
-        radius=neck_radius,
-        height=neck_height,
-        sections=64,
-    )
+    ball_z = base_top + body_height + rim_height + neck_height + ball_radius * 0.92
+    ball = trimesh.creation.icosphere(subdivisions=4, radius=ball_radius)
+    ball.apply_translation([-0.90, 0, ball_z])
 
-    neck_z = (
-        base_top
-        + body_height
-        + rim_height
-        + neck_height / 2
-    )
-
-    neck.apply_translation([
-        0.90,
-        0,
-        neck_z
-    ])
-
-    ball_z = (
-        base_top
-        + body_height
-        + rim_height
-        + neck_height
-        + ball_radius * 0.92
-    )
-
-    ball = trimesh.creation.icosphere(
-        subdivisions=4,
-        radius=ball_radius,
-    )
-
-    ball.apply_translation([
-        0.90,
-        0,
-        ball_z
-    ])
-
-    trophy = trimesh.util.concatenate([
-        lower_base,
-        upper_base,
-        body,
-        rim,
-        neck,
-        ball,
-    ])
-
+    trophy = trimesh.util.concatenate([lower_base, upper_base, body, rim, neck, ball])
     return trophy
 
 if __name__ == "__main__":
