@@ -13,6 +13,25 @@ The project evaluates reconstruction, generation, latent-space
 interpretability, controllable editing, disentanglement, and
 gradient-based shape optimization.
 
+![Semantic latent traversals](docs/images/latent_traversals.png)
+
+> **Semantic latent traversals.** Starting from the same encoded trophy,
+> moving along linear-probe directions produces consistent changes in ball
+> radius, support sweep, and lower-base radius.
+
+## Key Findings
+
+- The AE reconstructs held-out geometry with 0.9946 IoU; the VAE reaches
+  0.9870 IoU.
+- Five known geometric properties are strongly linearly accessible in the
+  learned latent space, with R² above 0.90.
+- Linear-probe directions support controllable edits, although the directions
+  are not perfectly disentangled.
+- Reduced-variance VAE sampling produces substantially more connected
+  geometry than standard-normal sampling in this experiment.
+- Gradient-based latent optimization changes multiple predicted geometric
+  objectives while preserving a coherent decoded shape.
+
 ## Research Questions
 
 1. Can a neural model accurately reconstruct unseen trophy geometry?
@@ -74,6 +93,11 @@ These parameters provide ground-truth labels for latent-space analysis.
 
 Approximately 10,000 procedural trophies are generated.
 
+![Procedurally generated trophy dataset](docs/images/dataset_overview.png)
+
+> **Dataset examples.** A fixed-view sample from the procedurally generated
+> dataset, which varies across ten explicit geometric controls.
+
 The dataset is divided deterministically using random seed 42:
 
 - 80% training
@@ -112,6 +136,18 @@ The deterministic autoencoder provides the strongest reconstruction
 performance, while both models reconstruct unseen trophy geometry with
 high accuracy.
 
+![AE and VAE reconstructions](docs/images/reconstructions.png)
+
+> **Held-out reconstructions.** Original voxel grids (top), deterministic AE
+> reconstructions (middle), and VAE mean reconstructions (bottom).
+
+### Latent Interpolation
+
+![Autoencoder latent interpolation](docs/images/latent_interpolation.png)
+
+> **Latent interpolation.** Linear interpolation between two encoded test
+> trophies produces a sequence of intermediate decoded geometries.
+
 ### Latent-Space Property Prediction
 
 Several geometric properties are highly linearly predictable from the
@@ -147,7 +183,12 @@ Generation quality was evaluated using connected-component statistics.
 The standard-normal prior does not always produce coherent geometry.
 Reduced-variance sampling substantially improves connectivity.
 
-The 'std=0.5` experiment should be interpreted as reduced-variance
+![VAE samples at different latent standard deviations](docs/images/vae_samples.png)
+
+> **VAE generation.** Samples decoded at three latent standard deviations.
+> The same sample indices and rendering settings are used in every row.
+
+The `std=0.5` experiment should be interpreted as reduced-variance
 sampling rather than as evidence that the learned posterior perfectly
 matches the standard-normal VAE prior.
 
@@ -166,6 +207,8 @@ Editing experiments demonstrate controllable geometric changes.
 A separate disentanglement analysis measures unintended effects on other
 known procedural properties.
 
+![Semantic latent traversals](docs/images/latent_traversals.png)
+
 ### Shape Optimization
 
 Gradient-based optimization was performed directly in latent space.
@@ -180,6 +223,11 @@ Predicted ball radius:       0.9230 -> 0.7578
 
 The decoded trophy remained geometrically coherent throughout the
 optimization trajectory.
+
+![Latent-space optimization trajectory](docs/images/latent_optimization.png)
+
+> **Latent-space optimization.** Decoded shapes across the optimization
+> trajectory and the corresponding linear-probe predictions.
 
 ## Repository Structure
 
@@ -209,6 +257,7 @@ src/
     ├── sample_vae.py
     ├── evaluate_vae_samples.py
     ├── compare_ae_vae.py
+    ├── generate_readme_images.py
     ├── summarize_results.py
     └── validate_submission.py
 ```
@@ -276,6 +325,30 @@ Compare models and summarize results:
 ```bash
 python src/analysis/compare_ae_vae.py
 python src/analysis/summarize_results.py
+```
+
+### Generate the README Figures
+
+After producing the dataset and experiment outputs above, generate all README
+images:
+
+```bash
+python src/analysis/generate_readme_images.py --strict
+```
+
+The script reads generated data from `data/` and `outputs/`, then writes the
+small, GitHub-ready figures to `docs/images/`. The raw `outputs/` directory
+remains ignored because it contains checkpoints and experiment artifacts. To
+regenerate only selected figures, use `--only`, for example:
+
+```bash
+python src/analysis/generate_readme_images.py --only traversals optimization
+```
+
+Commit the rendered figures with the code and README:
+
+```bash
+git add README.md src/analysis/generate_readme_images.py docs/images/
 ```
 
 Validate the final project:

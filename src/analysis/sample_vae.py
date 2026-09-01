@@ -13,7 +13,7 @@ from src.models.vae import VAE3D
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 CHECKPOINT = ROOT / "outputs" / "checkpoints" / "vae_best.pt"
-OUTPUT_DIR =  ROOT / "outputs" / "experiments" / "vae_samples_std_0.5"
+OUTPUT_DIR = ROOT / "outputs" / "experiments" / "vae_samples_std_0.5"
 
 LATENT_DIM = 32
 NUM_SAMPLES = 100
