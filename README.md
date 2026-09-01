@@ -221,13 +221,6 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-On Windows:
-
-```bash
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
 ## Reproducing the Pipeline
 
 Generate the procedural dataset:
