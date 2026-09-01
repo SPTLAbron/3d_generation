@@ -34,9 +34,6 @@ OUTPUT_ROOT = (
 
 LATENT_DIM = 32
 
-# Start with all parameters.
-# If some have poor probe R² after retraining,
-# remove them from this list.
 EDIT_PARAMETERS = [
     "ball_radius",
     "support_sweep",
@@ -139,8 +136,6 @@ def main():
         train_loader,
     )
 
-    # Use one fixed unseen test trophy
-    # for all edit directions.
     x, original_parameters = (
         test_dataset[0]
     )
@@ -190,7 +185,6 @@ def main():
             exist_ok=True,
         )
 
-        # Save the learned semantic direction.
         np.save(
             output_dir
             / "direction.npy",

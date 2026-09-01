@@ -1,7 +1,8 @@
 from pathlib import Path
+import json
 
 import numpy as np
-from scipy.ndimage import label
+from scipy import ndimage
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,104 +14,249 @@ SAMPLE_DIR = (
     / "vae_samples"
 )
 
-THRESHOLD = 0.5
+THRESHOLD = 1.0
 
 
 def evaluate_sample(path):
+
     probabilities = np.load(path)
 
-    voxels = probabilities > THRESHOLD
-
-    occupied = int(voxels.sum())
-
-    # 6-connected 3D components
-    structure = np.zeros((3, 3, 3), dtype=int)
-
-    structure[1, 1, 1] = 1
-    structure[0, 1, 1] = 1
-    structure[2, 1, 1] = 1
-    structure[1, 0, 1] = 1
-    structure[1, 2, 1] = 1
-    structure[1, 1, 0] = 1
-    structure[1, 1, 2] = 1
-
-    labeled, num_components = label(
-        voxels,
-        structure=structure
+    occupied = (
+        probabilities >= THRESHOLD
     )
 
-    if num_components == 0:
+    voxel_count = int(
+        occupied.sum()
+    )
+
+    if voxel_count == 0:
+        return {
+            "voxel_count": 0,
+            "components": 0,
+            "largest_component_fraction": 0.0,
+        }
+
+    structure = ndimage.generate_binary_structure(
+        rank=3,
+        connectivity=1,
+    )
+
+    labeled, num_components = ndimage.label(
+        occupied,
+        structure=structure,
+    )
+
+    component_sizes = np.bincount(
+        labeled.ravel()
+    )
+
+    component_sizes = component_sizes[1:]
+
+    if len(component_sizes) == 0:
         largest_fraction = 0.0
     else:
-        component_sizes = np.bincount(
-            labeled.ravel()
-        )[1:]
-
-        largest_fraction = (
+        largest_component = int(
             component_sizes.max()
-            / occupied
         )
 
-    return (
-        occupied,
-        num_components,
-        largest_fraction
-    )
+        largest_fraction = (
+            largest_component
+            / voxel_count
+        )
+
+    return {
+        "voxel_count": voxel_count,
+        "components": int(num_components),
+        "largest_component_fraction": float(
+            largest_fraction
+        ),
+    }
 
 
 def main():
-    paths = sorted(
-        SAMPLE_DIR.glob("sample_*.npy")
+
+    files = sorted(
+        SAMPLE_DIR.glob(
+            "sample_*.npy"
+        )
     )
+
+    if not files:
+        raise FileNotFoundError(
+            f"No VAE samples found in: "
+            f"{SAMPLE_DIR}"
+        )
 
     results = []
 
-    for path in paths:
+    for path in files:
 
-        occupied, components, largest_fraction = (
-            evaluate_sample(path)
+        result = evaluate_sample(
+            path
         )
 
+        result["sample"] = path.name
+
         results.append(
-            largest_fraction
+            result
         )
 
         print(
-            f"{path.name:20s} "
-            f"voxels={occupied:5d} "
-            f"components={components:3d} "
-            f"largest={largest_fraction:.4f}"
+            f"{path.name:<20} "
+            f"voxels="
+            f"{result['voxel_count']:5d} "
+            f"components="
+            f"{result['components']:3d} "
+            f"largest="
+            f"{result['largest_component_fraction']:.4f}"
         )
 
-    results = np.array(results)
+    largest_fractions = np.array(
+        [
+            result[
+                "largest_component_fraction"
+            ]
+            for result in results
+        ],
+        dtype=np.float64,
+    )
+
+    component_counts = np.array(
+        [
+            result["components"]
+            for result in results
+        ],
+        dtype=np.int64,
+    )
+
+    num_samples = len(results)
+
+    mean_largest = float(
+        largest_fractions.mean()
+    )
+
+    fully_connected_count = int(
+        np.sum(
+            component_counts == 1
+        )
+    )
+
+    over_99_count = int(
+        np.sum(
+            largest_fractions > 0.99
+        )
+    )
+
+    over_95_count = int(
+        np.sum(
+            largest_fractions > 0.95
+        )
+    )
+
+    fully_connected_fraction = (
+        fully_connected_count
+        / num_samples
+    )
+
+    over_99_fraction = (
+        over_99_count
+        / num_samples
+    )
+
+    over_95_fraction = (
+        over_95_count
+        / num_samples
+    )
 
     print()
-    print("------------------------------")
-    print("VAE GENERATION SUMMARY")
-    print("------------------------------")
-
     print(
-        f"Samples: {len(results)}"
+        "------------------------------"
+    )
+    print(
+        "VAE GENERATION SUMMARY"
+    )
+    print(
+        "------------------------------"
     )
 
     print(
-        f"Mean largest-component fraction: "
-        f"{results.mean():.4f}"
+        f"Samples: {num_samples}"
     )
 
     print(
-        f"Fully connected: "
-        f"{np.mean(results == 1.0) * 100:.1f}%"
+        "Mean largest-component fraction: "
+        f"{mean_largest:.4f}"
     )
 
     print(
-        f">99% in largest component: "
-        f"{np.mean(results >= 0.99) * 100:.1f}%"
+        "Fully connected: "
+        f"{100 * fully_connected_fraction:.1f}%"
     )
 
     print(
-        f">95% in largest component: "
-        f"{np.mean(results >= 0.95) * 100:.1f}%"
+        ">99% in largest component: "
+        f"{100 * over_99_fraction:.1f}%"
+    )
+
+    print(
+        ">95% in largest component: "
+        f"{100 * over_95_fraction:.1f}%"
+    )
+
+    summary = {
+        "sample_directory": SAMPLE_DIR.name,
+        "threshold": THRESHOLD,
+        "num_samples": num_samples,
+
+        "mean_largest_component_fraction": (
+            mean_largest
+        ),
+
+        "fully_connected_count": (
+            fully_connected_count
+        ),
+
+        "fully_connected_fraction": (
+            fully_connected_fraction
+        ),
+
+        "over_99_percent_count": (
+            over_99_count
+        ),
+
+        "over_99_percent_fraction": (
+            over_99_fraction
+        ),
+
+        "over_95_percent_count": (
+            over_95_count
+        ),
+
+        "over_95_percent_fraction": (
+            over_95_fraction
+        ),
+    }
+
+    summary_path = (
+        SAMPLE_DIR
+        / "summary.json"
+    )
+
+    with open(
+        summary_path,
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            summary,
+            file,
+            indent=2,
+        )
+
+    print()
+    print(
+        f"Saved summary to: "
+        f"{summary_path}"
     )
 
 
