@@ -45,18 +45,11 @@ def main():
     print("================================")
     print()
 
-    comparison_path = (
-        EXPERIMENTS_DIR
-        / "ae_vs_vae"
-        / "comparison.json"
-    )
+    comparison_path = EXPERIMENTS_DIR / "ae_vs_vae" / "comparison.json"
 
-    comparison = load_json(
-        comparison_path
-    )
+    comparison = load_json(comparison_path)
 
     if comparison is not None:
-
         save_json(
             comparison,
             OUTPUT_DIR / "model_comparison.json",
@@ -66,10 +59,7 @@ def main():
             "Loaded AE/VAE reconstruction comparison."
         )
 
-    probe_path = (
-        EXPERIMENTS_DIR
-        / "latent_probe_results.csv"
-    )
+    probe_path = EXPERIMENTS_DIR / "latent_probe_results.csv"
 
     probe_df = load_csv(
         probe_path
@@ -78,7 +68,6 @@ def main():
     latent_probe_summary = None
 
     if probe_df is not None:
-
         if "r2" in probe_df.columns:
             probe_df = probe_df.sort_values(
                 "r2",
@@ -86,8 +75,7 @@ def main():
             )
 
         probe_df.to_csv(
-            OUTPUT_DIR
-            / "latent_probe_summary.csv",
+            OUTPUT_DIR / "latent_probe_summary.csv",
             index=False,
         )
 
@@ -101,43 +89,25 @@ def main():
             "Loaded latent probe results."
         )
 
-    disentanglement_path = (
-        EXPERIMENTS_DIR
-        / "disentanglement.csv"
-    )
+    disentanglement_path = EXPERIMENTS_DIR / "disentanglement.csv"
+    disentanglement_df = load_csv(disentanglement_path)
 
-    disentanglement_matrix_path = (
-        EXPERIMENTS_DIR
-        / "disentanglement_matrix.csv"
-    )
-
-    disentanglement_ratios_path = (
-        EXPERIMENTS_DIR
-        / "disentanglement_ratios.csv"
-    )
-
-    disentanglement_df = load_csv(
-        disentanglement_path
-    )
-
+    disentanglement_matrix_path = EXPERIMENTS_DIR / "disentanglement_matrix.csv"
     disentanglement_matrix_df = load_csv(
         disentanglement_matrix_path,
         index_col=0,
     )
 
-    disentanglement_ratios_df = load_csv(
-        disentanglement_ratios_path
-    )
+    disentanglement_ratios_path = EXPERIMENTS_DIR / "disentanglement_ratios.csv"
+    disentanglement_ratios_df = load_csv(disentanglement_ratios_path)
 
     disentanglement_summary = None
     disentanglement_matrix_summary = None
     disentanglement_ratios_summary = None
 
     if disentanglement_df is not None:
-
         disentanglement_df.to_csv(
-            OUTPUT_DIR
-            / "disentanglement_summary.csv",
+            OUTPUT_DIR / "disentanglement_summary.csv",
             index=False,
         )
 
@@ -152,10 +122,8 @@ def main():
         )
 
     if disentanglement_matrix_df is not None:
-
         disentanglement_matrix_df.to_csv(
-            OUTPUT_DIR
-            / "disentanglement_matrix.csv"
+            OUTPUT_DIR / "disentanglement_matrix.csv"
         )
 
         disentanglement_matrix_summary = (
@@ -167,10 +135,8 @@ def main():
         )
 
     if disentanglement_ratios_df is not None:
-
         disentanglement_ratios_df.to_csv(
-            OUTPUT_DIR
-            / "disentanglement_ratios.csv",
+            OUTPUT_DIR / "disentanglement_ratios.csv",
             index=False,
         )
 
@@ -195,17 +161,13 @@ def main():
         {
             "latent_std": 0.7,
             "path": (
-                EXPERIMENTS_DIR
-                / "vae_samples_std_0.7"
-                / "summary.json"
+                EXPERIMENTS_DIR / "vae_samples_std_0.7" / "summary.json"
             ),
         },
         {
             "latent_std": 0.5,
             "path": (
-                EXPERIMENTS_DIR
-                / "vae_samples_std_0.5"
-                / "summary.json"
+                EXPERIMENTS_DIR / "vae_samples_std_0.5" / "summary.json"
             ),
         },
     ]
@@ -213,7 +175,6 @@ def main():
     sampling_rows = []
 
     for run in sampling_runs:
-
         latent_std = run["latent_std"]
         path = run["path"]
 
@@ -233,10 +194,7 @@ def main():
         sampling_rows.append(row)
 
     if sampling_rows:
-
-        sampling_df = pd.DataFrame(
-            sampling_rows
-        )
+        sampling_df = pd.DataFrame(sampling_rows)
 
         columns = list(
             sampling_df.columns
@@ -252,8 +210,7 @@ def main():
             ]
 
         sampling_df.to_csv(
-            OUTPUT_DIR
-            / "vae_sampling_comparison.csv",
+            OUTPUT_DIR / "vae_sampling_comparison.csv",
             index=False,
         )
 
@@ -262,22 +219,16 @@ def main():
         )
 
     optimization_path = (
-        EXPERIMENTS_DIR
-        / "shape_optimization"
-        / "history.csv"
+        EXPERIMENTS_DIR / "shape_optimization" / "history.csv"
     )
 
-    optimization_history = load_csv(
-        optimization_path
-    )
+    optimization_history = load_csv(optimization_path)
 
     optimization_summary = None
 
     if optimization_history is not None:
-
         optimization_history.to_csv(
-            OUTPUT_DIR
-            / "shape_optimization_history.csv",
+            OUTPUT_DIR / "shape_optimization_history.csv",
             index=False,
         )
 
@@ -290,7 +241,6 @@ def main():
         }
 
         if "step" in optimization_history.columns:
-
             optimization_summary[
                 "start_step"
             ] = int(first["step"])
@@ -299,43 +249,35 @@ def main():
                 "end_step"
             ] = int(last["step"])
 
-        if (
-            "predicted_base_radius"
-            in optimization_history.columns
-        ):
-
+        if ("predicted_lower_base_radius" in optimization_history.columns):
             start_base = float(
                 first[
-                    "predicted_base_radius"
+                    "predicted_lower_base_radius"
                 ]
             )
 
             end_base = float(
                 last[
-                    "predicted_base_radius"
+                    "predicted_lower_base_radius"
                 ]
             )
 
             optimization_summary[
-                "start_predicted_base_radius"
+                "start_predicted_lower_base_radius"
             ] = start_base
 
             optimization_summary[
-                "end_predicted_base_radius"
+                "end_predicted_lower_base_radius"
             ] = end_base
 
             optimization_summary[
-                "base_radius_change"
+                "lower_base_radius_change"
             ] = (
                 end_base
                 - start_base
             )
 
-        if (
-            "predicted_ball_radius"
-            in optimization_history.columns
-        ):
-
+        if ("predicted_ball_radius" in optimization_history.columns):
             start_ball = float(
                 first[
                     "predicted_ball_radius"
@@ -363,32 +305,24 @@ def main():
                 - start_ball
             )
 
-        if (
-            "normalized_base"
-            in optimization_history.columns
-        ):
-
+        if ("normalized_lower_base_radius" in optimization_history.columns):
             optimization_summary[
-                "start_normalized_base"
+                "start_normalized_lower_base_radius"
             ] = float(
                 first[
-                    "normalized_base"
+                    "normalized_lower_base_radius"
                 ]
             )
 
             optimization_summary[
-                "end_normalized_base"
+                "end_normalized_lower_base_radius"
             ] = float(
                 last[
-                    "normalized_base"
+                    "normalized_lower_base_radius"
                 ]
             )
 
-        if (
-            "normalized_ball"
-            in optimization_history.columns
-        ):
-
+        if ("normalized_ball" in optimization_history.columns):
             optimization_summary[
                 "start_normalized_ball"
             ] = float(
@@ -405,11 +339,7 @@ def main():
                 ]
             )
 
-        if (
-            "latent_distance"
-            in optimization_history.columns
-        ):
-
+        if ("latent_distance" in optimization_history.columns):
             optimization_summary[
                 "start_latent_distance"
             ] = float(
@@ -426,11 +356,7 @@ def main():
                 ]
             )
 
-        if (
-            "objective"
-            in optimization_history.columns
-        ):
-
+        if ("objective" in optimization_history.columns):
             start_objective = float(
                 first["objective"]
             )
@@ -454,11 +380,7 @@ def main():
                 - start_objective
             )
 
-        if (
-            "latent_bound_hits"
-            in optimization_history.columns
-        ):
-
+        if ("latent_bound_hits" in optimization_history.columns):
             optimization_summary[
                 "max_latent_bound_hits"
             ] = int(
@@ -477,8 +399,7 @@ def main():
 
         save_json(
             optimization_summary,
-            OUTPUT_DIR
-            / "shape_optimization_summary.json",
+            OUTPUT_DIR / "shape_optimization_summary.json",
         )
 
         print(
@@ -486,22 +407,16 @@ def main():
         )
 
     reconstruction_csv_path = (
-        EXPERIMENTS_DIR
-        / "ae_vs_vae"
-        / "reconstruction_metrics.csv"
+        EXPERIMENTS_DIR / "ae_vs_vae" / "reconstruction_metrics.csv"
     )
 
-    reconstruction_df = load_csv(
-        reconstruction_csv_path
-    )
+    reconstruction_df = load_csv(reconstruction_csv_path)
 
     reconstruction_metrics = None
 
     if reconstruction_df is not None:
-
         reconstruction_df.to_csv(
-            OUTPUT_DIR
-            / "model_reconstruction_metrics.csv",
+            OUTPUT_DIR / "model_reconstruction_metrics.csv",
             index=False,
         )
 
@@ -515,15 +430,11 @@ def main():
             "Loaded reconstruction metrics CSV."
         )
 
-    interpolation_dir = (
-        EXPERIMENTS_DIR
-        / "interpolation"
-    )
+    interpolation_dir = EXPERIMENTS_DIR / "interpolation"
 
     interpolation_summary = None
 
     if interpolation_dir.exists():
-
         interpolation_files = sorted(
             interpolation_dir.glob(
                 "*.npy"
@@ -547,15 +458,11 @@ def main():
             f"AE interpolation samples."
         )
 
-    latent_edits_dir = (
-        EXPERIMENTS_DIR
-        / "latent_edits"
-    )
+    latent_edits_dir = EXPERIMENTS_DIR / "latent_edits"
 
     latent_edit_summary = None
 
     if latent_edits_dir.exists():
-
         parameter_directories = sorted(
             [
                 path
@@ -567,10 +474,7 @@ def main():
 
         parameter_info = {}
 
-        for parameter_dir in (
-            parameter_directories
-        ):
-
+        for parameter_dir in (parameter_directories):
             voxel_files = sorted(
                 parameter_dir.glob(
                     "*_voxels.npy"
@@ -601,10 +505,7 @@ def main():
                     direction_path.exists(),
             }
 
-        manifest_path = (
-            latent_edits_dir
-            / "manifest.csv"
-        )
+        manifest_path = latent_edits_dir / "manifest.csv"
 
         latent_edit_summary = {
             "parameters":
@@ -654,8 +555,7 @@ def main():
 
     save_json(
         final_summary,
-        OUTPUT_DIR
-        / "results_summary.json",
+        OUTPUT_DIR / "results_summary.json",
     )
 
     overview_lines = []
@@ -671,7 +571,6 @@ def main():
     overview_lines.append("")
 
     if comparison is not None:
-
         reconstruction = comparison.get(
             "reconstruction",
             {},
@@ -692,7 +591,6 @@ def main():
         )
 
         if ae:
-
             overview_lines.append(
                 "AE:"
             )
@@ -713,7 +611,6 @@ def main():
             )
 
         if vae:
-
             overview_lines.append(
                 "VAE:"
             )
@@ -736,20 +633,12 @@ def main():
         overview_lines.append("")
 
     if probe_df is not None:
-
         overview_lines.append(
             "LATENT PROBE"
         )
 
-        if (
-            "parameter" in probe_df.columns
-            and "r2" in probe_df.columns
-        ):
-
-            for _, row in (
-                probe_df.iterrows()
-            ):
-
+        if ("parameter" in probe_df.columns and "r2" in probe_df.columns):
+            for _, row in (probe_df.iterrows()):
                 parameter = row[
                     "parameter"
                 ]
@@ -768,7 +657,6 @@ def main():
                     )
 
                 else:
-
                     overview_lines.append(
                         f"  {parameter}: "
                         f"R2={r2:.4f}"
@@ -777,49 +665,34 @@ def main():
         overview_lines.append("")
 
     if sampling_rows:
-
         overview_lines.append(
             "VAE SAMPLING"
         )
 
         for row in sampling_rows:
+            latent_std = row.get("latent_std")
 
-            latent_std = row.get(
-                "latent_std"
-            )
+            mean_fraction = row.get("mean_largest_component_fraction")
 
-            mean_fraction = row.get(
-                "mean_largest_component_fraction"
-            )
+            fully_connected = row.get("fully_connected_fraction")
 
-            fully_connected = row.get(
-                "fully_connected_fraction"
-            )
+            over_95 = row.get("over_95_percent_fraction")
 
-            over_95 = row.get(
-                "over_95_percent_fraction"
-            )
-
-            overview_lines.append(
-                f"  std={latent_std}:"
-            )
+            overview_lines.append(f"  std={latent_std}:")
 
             if mean_fraction is not None:
-
                 overview_lines.append(
                     f"    mean largest component: "
                     f"{mean_fraction:.4f}"
                 )
 
             if fully_connected is not None:
-
                 overview_lines.append(
                     f"    fully connected: "
                     f"{100 * fully_connected:.1f}%"
                 )
 
             if over_95 is not None:
-
                 overview_lines.append(
                     f"    >95% largest component: "
                     f"{100 * over_95:.1f}%"
@@ -828,39 +701,21 @@ def main():
         overview_lines.append("")
 
     if optimization_summary is not None:
+        overview_lines.append("SHAPE OPTIMIZATION")
 
-        overview_lines.append(
-            "SHAPE OPTIMIZATION"
-        )
-
-        if (
-            "base_radius_change"
-            in optimization_summary
-        ):
-
+        if ("lower_base_radius_change" in optimization_summary):
             overview_lines.append(
-                "  predicted base radius change: "
-                f"{optimization_summary['base_radius_change']:.6f}"
+                "  predicted lower base radius change: "
+                f"{optimization_summary['lower_base_radius_change']:.6f}"
             )
 
-        if (
-            "ball_radius_change"
-            in optimization_summary
-        ):
-
+        if ("ball_radius_change" in optimization_summary):
             overview_lines.append(
                 "  predicted ball radius change: "
                 f"{optimization_summary['ball_radius_change']:.6f}"
             )
 
-        if (
-            "start_objective"
-            in optimization_summary
-            and
-            "end_objective"
-            in optimization_summary
-        ):
-
+        if ("start_objective" in optimization_summary and "end_objective" in optimization_summary):
             overview_lines.append(
                 "  objective: "
                 f"{optimization_summary['start_objective']:.6f}"
@@ -868,21 +723,13 @@ def main():
                 f"{optimization_summary['end_objective']:.6f}"
             )
 
-        if (
-            "final_latent_distance"
-            in optimization_summary
-        ):
-
+        if ("final_latent_distance" in optimization_summary):
             overview_lines.append(
                 "  final latent distance: "
                 f"{optimization_summary['final_latent_distance']:.6f}"
             )
 
-        if (
-            "max_latent_bound_hits"
-            in optimization_summary
-        ):
-
+        if ("max_latent_bound_hits" in optimization_summary):
             overview_lines.append(
                 "  max latent bound hits: "
                 f"{optimization_summary['max_latent_bound_hits']}"
@@ -890,17 +737,13 @@ def main():
 
         overview_lines.append("")
 
-    overview_path = (
-        OUTPUT_DIR
-        / "results_overview.txt"
-    )
+    overview_path = OUTPUT_DIR / "results_overview.txt"
 
     with open(
         overview_path,
         "w",
         encoding="utf-8",
     ) as file:
-
         file.write(
             "\n".join(
                 overview_lines

@@ -17,54 +17,20 @@ from src.models.autoencoder import (
     Autoencoder3D,
 )
 
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available()
-    else "cpu"
-)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-CHECKPOINT = (
-    ROOT
-    / "outputs"
-    / "checkpoints"
-    / "ae_best.pt"
-)
-
-OUTPUT_DIR = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "shape_optimization"
-)
+CHECKPOINT = ROOT / "outputs" / "checkpoints" / "ae_best.pt"
+OUTPUT_DIR = ROOT / "outputs" / "experiments" / "shape_optimization"
 
 LATENT_DIM = 32
-
 NUM_STEPS = 30
 LEARNING_RATE = 0.05
-
 LATENT_REGULARIZATION = 0.02
-
 LATENT_BOUND_STD = 3.0
-
 BASE_PARAMETER = "lower_base_radius"
 BALL_PARAMETER = "ball_radius"
 
-def encode_loader(
-    model,
-    loader,
-):
-    """
-    Encode all samples from a DataLoader.
-
-    Returns
-    -------
-    z : np.ndarray
-        Latent vectors with shape [N, latent_dim].
-
-    y : np.ndarray
-        Procedural parameters with shape
-        [N, number_of_parameters].
-    """
-
+def encode_loader(model, loader):
     zs = []
     ys = []
 
@@ -94,23 +60,8 @@ def encode_loader(
     )
 
 
-def fit_probe(
-    z_train,
-    y_train,
-    parameter_name,
-):
-    """
-    Fit a linear regression probe that predicts one
-    procedural parameter from the latent representation.
-
-    Returns the regression weights and bias as tensors
-    so that the prediction remains differentiable with
-    respect to z.
-    """
-
-    index = PARAM_COLUMNS.index(
-        parameter_name
-    )
+def fit_probe(z_train, y_train, parameter_name):
+    index = PARAM_COLUMNS.index(parameter_name)
 
     reg = LinearRegression()
 
@@ -134,15 +85,7 @@ def fit_probe(
     return weight, bias
 
 
-def probe_prediction(
-    z,
-    weight,
-    bias,
-):
-    """
-    Differentiable linear-probe prediction.
-    """
-
+def probe_prediction(z, weight, bias):
     return (
         z @ weight
         + bias
@@ -151,9 +94,7 @@ def probe_prediction(
 
 def main():
 
-    print(
-        f"Using device: {DEVICE}"
-    )
+    print(f"Using device: {DEVICE}")
 
     (
         train_loader,
@@ -182,9 +123,7 @@ def main():
     for parameter in model.parameters():
         parameter.requires_grad_(False)
 
-    print(
-        "Encoding training set..."
-    )
+    print("Encoding training set...")
 
     z_train, y_train = encode_loader(
         model,
@@ -376,15 +315,10 @@ def main():
         exist_ok=True,
     )
 
-    for old_file in OUTPUT_DIR.glob(
-        "step_*.npy"
-    ):
+    for old_file in OUTPUT_DIR.glob("step_*.npy"):
         old_file.unlink()
 
-    history_path = (
-        OUTPUT_DIR
-        / "history.csv"
-    )
+    history_path = OUTPUT_DIR / "history.csv"
 
     if history_path.exists():
         history_path.unlink()
@@ -414,10 +348,7 @@ def main():
         "-" * 90
     )
 
-    for step in range(
-        NUM_STEPS + 1
-    ):
-
+    for step in range(NUM_STEPS + 1):
         predicted_base = (
             probe_prediction(
                 z,
@@ -458,7 +389,6 @@ def main():
         )
 
         with torch.no_grad():
-
             logits = model.decode(
                 z
             )

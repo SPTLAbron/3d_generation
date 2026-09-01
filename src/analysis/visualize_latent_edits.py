@@ -4,24 +4,11 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-
-INPUT_ROOT = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "latent_edits"
-)
-
-OUTPUT_ROOT = (
-    ROOT
-    / "outputs"
-    / "renders"
-    / "latent_edits"
-)
+INPUT_ROOT = ROOT / "outputs" / "experiments" / "latent_edits"
+OUTPUT_ROOT = ROOT / "outputs" / "renders" / "latent_edits"
 
 THRESHOLD = 0.5
 
@@ -34,29 +21,19 @@ ALPHAS = [
 ]
 
 
-def plot_voxel(
-    ax,
-    probabilities,
-    title,
-):
+def plot_voxel(ax, probabilities, title):
     occupied = (
         probabilities
         >= THRESHOLD
     )
 
-    ax.voxels(
-        occupied
-    )
+    ax.voxels(occupied)
 
-    ax.set_title(
-        title
-    )
+    ax.set_title(title)
 
     ax.set_axis_off()
 
-    ax.set_box_aspect(
-        (1, 1, 1)
-    )
+    ax.set_box_aspect((1, 1, 1))
 
 
 def main():
@@ -72,18 +49,13 @@ def main():
     )
 
     for parameter_dir in parameter_dirs:
-        parameter_name = (
-            parameter_dir.name
-        )
+        parameter_name = (parameter_dir.name)
 
         fig = plt.figure(
             figsize=(18, 4)
         )
 
-        for i, alpha in enumerate(
-            ALPHAS,
-            start=1,
-        ):
+        for i, alpha in enumerate(ALPHAS, start=1):
             path = (
                 parameter_dir
                 / (

@@ -55,7 +55,6 @@ def main():
 
     results = []
     for i, name in enumerate(PARAM_COLUMNS):
-
         reg = LinearRegression()
 
         reg.fit(

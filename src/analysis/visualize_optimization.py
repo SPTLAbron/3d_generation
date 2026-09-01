@@ -9,20 +9,9 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+INPUT_DIR = ROOT / "outputs" / "experiments" / "shape_optimization"
 
-INPUT_DIR = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "shape_optimization"
-)
-
-OUTPUT_DIR = (
-    ROOT
-    / "outputs"
-    / "renders"
-    / "shape_optimization"
-)
+OUTPUT_DIR = ROOT / "outputs" / "renders" / "shape_optimization"
 
 THRESHOLD = 0.5
 
@@ -38,10 +27,7 @@ STEPS = [
 
 
 def load_voxels(step):
-    path = (
-        INPUT_DIR
-        / f"step_{step:03d}.npy"
-    )
+    path = INPUT_DIR / f"step_{step:03d}.npy"
 
     if not path.exists():
         raise FileNotFoundError(
@@ -61,10 +47,7 @@ def render_trajectory():
         figsize=(22, 4)
     )
 
-    for i, step in enumerate(
-        STEPS,
-        start=1,
-    ):
+    for i, step in enumerate(STEPS, start=1):
         probabilities = load_voxels(
             step
         )
@@ -102,10 +85,7 @@ def render_trajectory():
 
     fig.tight_layout()
 
-    output_path = (
-        OUTPUT_DIR
-        / "trajectory.png"
-    )
+    output_path = OUTPUT_DIR / "trajectory.png"
 
     fig.savefig(
         output_path,
@@ -121,14 +101,9 @@ def render_trajectory():
 
 
 def plot_parameter_history():
-    history_path = (
-        INPUT_DIR
-        / "history.csv"
-    )
+    history_path = INPUT_DIR / "history.csv"
 
-    df = pd.read_csv(
-        history_path
-    )
+    df = pd.read_csv(history_path)
 
     fig, ax = plt.subplots(
         figsize=(8, 5)
@@ -174,10 +149,7 @@ def plot_parameter_history():
 
     fig.tight_layout()
 
-    output_path = (
-        OUTPUT_DIR
-        / "parameter_history.png"
-    )
+    output_path = OUTPUT_DIR / "parameter_history.png"
 
     fig.savefig(
         output_path,
@@ -193,10 +165,7 @@ def plot_parameter_history():
 
 
 def plot_latent_distance():
-    history_path = (
-        INPUT_DIR
-        / "history.csv"
-    )
+    history_path = INPUT_DIR / "history.csv"
 
     df = pd.read_csv(
         history_path
@@ -213,28 +182,17 @@ def plot_latent_distance():
         markersize=3,
     )
 
-    ax.set_xlabel(
-        "Optimization step"
-    )
+    ax.set_xlabel("Optimization step")
 
-    ax.set_ylabel(
-        "Mean squared distance from z0"
-    )
+    ax.set_ylabel("Mean squared distance from z0")
 
-    ax.set_title(
-        "Latent Distance During Optimization"
-    )
+    ax.set_title("Latent Distance During Optimization")
 
-    ax.grid(
-        alpha=0.25
-    )
+    ax.grid(alpha=0.25)
 
     fig.tight_layout()
 
-    output_path = (
-        OUTPUT_DIR
-        / "latent_distance.png"
-    )
+    output_path = OUTPUT_DIR / "latent_distance.png"
 
     fig.savefig(
         output_path,
@@ -250,19 +208,11 @@ def plot_latent_distance():
 
 
 def plot_bound_hits():
-    history_path = (
-        INPUT_DIR
-        / "history.csv"
-    )
+    history_path = INPUT_DIR / "history.csv"
 
-    df = pd.read_csv(
-        history_path
-    )
+    df = pd.read_csv(history_path)
 
-    if (
-        "latent_bound_hits"
-        not in df.columns
-    ):
+    if ("latent_bound_hits" not in df.columns):
         print(
             "No latent_bound_hits column. "
             "Skipping bound plot."
@@ -280,32 +230,19 @@ def plot_bound_hits():
         markersize=3,
     )
 
-    ax.set_xlabel(
-        "Optimization step"
-    )
+    ax.set_xlabel("Optimization step")
 
-    ax.set_ylabel(
-        "Latent dimensions at ±3σ bound"
-    )
+    ax.set_ylabel("Latent dimensions at ±3σ bound")
 
-    ax.set_title(
-        "Latent Bound Saturation"
-    )
+    ax.set_title("Latent Bound Saturation")
 
-    ax.set_ylim(
-        bottom=0
-    )
+    ax.set_ylim(bottom=0)
 
-    ax.grid(
-        alpha=0.25
-    )
+    ax.grid(alpha=0.25)
 
     fig.tight_layout()
 
-    output_path = (
-        OUTPUT_DIR
-        / "latent_bound_hits.png"
-    )
+    output_path = OUTPUT_DIR / "latent_bound_hits.png"
 
     fig.savefig(
         output_path,
@@ -322,11 +259,8 @@ def plot_bound_hits():
 
 def main():
     render_trajectory()
-
     plot_parameter_history()
-
     plot_latent_distance()
-
     plot_bound_hits()
 
 

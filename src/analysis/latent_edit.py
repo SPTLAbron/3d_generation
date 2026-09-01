@@ -18,19 +18,9 @@ DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
-CHECKPOINT = (
-    ROOT
-    / "outputs"
-    / "checkpoints"
-    / "ae_best.pt"
-)
+CHECKPOINT = ROOT / "outputs" / "checkpoints" / "ae_best.pt"
 
-OUTPUT_ROOT = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "latent_edits"
-)
+OUTPUT_ROOT = ROOT / "outputs" / "experiments" / "latent_edits"
 
 LATENT_DIM = 32
 
@@ -44,7 +34,6 @@ EDIT_PARAMETERS = [
 ]
 
 ALPHAS = [-2.0, -1.0, 0.0, 1.0, 2.0]
-
 
 def encode_loader(model, loader):
     zs = []
@@ -70,11 +59,7 @@ def encode_loader(model, loader):
     )
 
 
-def fit_probe(
-    z_train,
-    y_train,
-    parameter_index,
-):
+def fit_probe(z_train, y_train, parameter_index):
     reg = LinearRegression()
 
     reg.fit(

@@ -11,14 +11,11 @@ from src.data.dataset import get_loaders
 from src.models.vae import VAE3D
 
 
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 CHECKPOINT = (
     ROOT / "outputs" / "checkpoints" / "vae_best.pt"
 )
-
 
 def main():
     train_loader, _, _, _, _, _ = get_loaders(

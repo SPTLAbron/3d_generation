@@ -22,10 +22,13 @@ def main():
     b=test_dataset[1][0].unsqueeze(0).to(DEVICE)
     
     with torch.no_grad():
-        za=model.encode(a); zb=model.encode(b)
+        za=model.encode(a)
+        zb=model.encode(b)
+        
         outputs=[torch.sigmoid(model.decode((1-t)*za+t*zb)).cpu().numpy()[0,0] for t in np.linspace(0,1,11)]
     
-    out=ROOT/"outputs"/"experiments"/"interpolation"; out.mkdir(parents=True,exist_ok=True)
+    out=ROOT/"outputs"/"experiments"/"interpolation"
+    out.mkdir(parents=True,exist_ok=True)
     
     for i,x in enumerate(outputs): 
         np.save(out/f"{i:02d}.npy",x)

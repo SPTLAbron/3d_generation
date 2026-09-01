@@ -7,15 +7,9 @@ from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[2]
 
-SAMPLE_DIR = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "vae_samples"
-)
+SAMPLE_DIR = ROOT / "outputs" / "experiments" / "vae_samples"
 
 THRESHOLD = 1.0
-
 
 def evaluate_sample(path):
 
@@ -60,8 +54,7 @@ def evaluate_sample(path):
         )
 
         largest_fraction = (
-            largest_component
-            / voxel_count
+            largest_component / voxel_count
         )
 
     return {
@@ -74,7 +67,6 @@ def evaluate_sample(path):
 
 
 def main():
-
     files = sorted(
         SAMPLE_DIR.glob(
             "sample_*.npy"
@@ -90,16 +82,11 @@ def main():
     results = []
 
     for path in files:
-
-        result = evaluate_sample(
-            path
-        )
+        result = evaluate_sample(path)
 
         result["sample"] = path.name
 
-        results.append(
-            result
-        )
+        results.append(result)
 
         print(
             f"{path.name:<20} "
@@ -123,8 +110,7 @@ def main():
 
     component_counts = np.array(
         [
-            result["components"]
-            for result in results
+            result["components"] for result in results
         ],
         dtype=np.int64,
     )
@@ -154,18 +140,15 @@ def main():
     )
 
     fully_connected_fraction = (
-        fully_connected_count
-        / num_samples
+        fully_connected_count / num_samples
     )
 
     over_99_fraction = (
-        over_99_count
-        / num_samples
+        over_99_count / num_samples
     )
 
     over_95_fraction = (
-        over_95_count
-        / num_samples
+        over_95_count / num_samples
     )
 
     print()

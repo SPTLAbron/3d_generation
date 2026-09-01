@@ -18,61 +18,22 @@ from src.models.autoencoder import Autoencoder3D
 from src.models.vae import VAE3D
 
 
-DEVICE = torch.device(
-    "cuda"
-    if torch.cuda.is_available()
-    else "cpu"
-)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 LATENT_DIM = 32
-
 BATCH_SIZE = 32
-
 THRESHOLD = 0.5
-
 NUM_VISUAL_EXAMPLES = 8
 
+AE_CHECKPOINT = ROOT / "outputs" / "checkpoints" / "ae_best.pt"
+VAE_CHECKPOINT = ROOT / "outputs" / "checkpoints" / "vae_best.pt"
+OUTPUT_DIR = ROOT / "outputs" / "experiments" / "ae_vs_vae"
+RENDER_DIR = ROOT / "outputs" / "renders"
 
-AE_CHECKPOINT = (
-    ROOT
-    / "outputs"
-    / "checkpoints"
-    / "ae_best.pt"
-)
+def binary_iou(prediction, target):
+    prediction = (prediction >= THRESHOLD)
 
-VAE_CHECKPOINT = (
-    ROOT
-    / "outputs"
-    / "checkpoints"
-    / "vae_best.pt"
-)
-
-
-OUTPUT_DIR = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "ae_vs_vae"
-)
-
-RENDER_DIR = (
-    ROOT
-    / "outputs"
-    / "renders"
-)
-
-def binary_iou(
-    prediction,
-    target,
-):
-
-    prediction = (
-        prediction >= THRESHOLD
-    )
-
-    target = (
-        target >= THRESHOLD
-    )
+    target = (target >= THRESHOLD)
 
     intersection = (
         prediction & target
@@ -93,15 +54,9 @@ def binary_iou(
 
     return iou
 
+def dice_score(prediction, target):
 
-def dice_score(
-    prediction,
-    target,
-):
-
-    prediction = (
-        prediction >= THRESHOLD
-    )
+    prediction = (prediction >= THRESHOLD)
 
     target = (
         target >= THRESHOLD
@@ -128,8 +83,7 @@ def dice_score(
     dice = (
         2.0 * intersection
         / (
-            prediction_count
-            + target_count
+            prediction_count + target_count
         ).clamp_min(1.0)
     )
 
@@ -150,7 +104,6 @@ def load_models():
 
     ae.eval()
 
-
     vae = VAE3D(
         latent_dim=LATENT_DIM
     ).to(DEVICE)
@@ -166,12 +119,7 @@ def load_models():
 
     return ae, vae
 
-def evaluate_reconstruction(
-    ae,
-    vae,
-    test_loader,
-):
-
+def evaluate_reconstruction(ae, vae, test_loader):
     ae_bce = []
     vae_bce = []
 
@@ -182,12 +130,8 @@ def evaluate_reconstruction(
     vae_dice = []
 
     with torch.no_grad():
-
         for batch in test_loader:
-            if isinstance(
-                batch,
-                (list, tuple),
-            ):
+            if isinstance(batch, (list, tuple)):
                 voxels = batch[0]
             else:
                 voxels = batch
@@ -320,12 +264,7 @@ def evaluate_reconstruction(
         },
     }
 
-def visualize_reconstructions(
-    ae,
-    vae,
-    test_dataset,
-):
-
+def visualize_reconstructions(ae, vae, test_dataset):
     num_examples = min(
         NUM_VISUAL_EXAMPLES,
         len(test_dataset),
@@ -338,16 +277,10 @@ def visualize_reconstructions(
         )
     )
 
-    for i in range(
-        num_examples
-    ):
-
+    for i in range(num_examples):
         sample = test_dataset[i]
 
-        if isinstance(
-            sample,
-            (list, tuple),
-        ):
+        if isinstance(sample, (list, tuple)):
             voxels = sample[0]
         else:
             voxels = sample
@@ -359,7 +292,6 @@ def visualize_reconstructions(
         )
 
         with torch.no_grad():
-
             ae_logits = ae(x)
 
             ae_probabilities = (
@@ -422,7 +354,6 @@ def visualize_reconstructions(
         ]
 
         for row in range(3):
-
             plot_index = (
                 row
                 * num_examples
@@ -518,10 +449,7 @@ def load_vae_generation_results():
 
     results = {}
 
-    for name, path in (
-        experiments.items()
-    ):
-
+    for name, path in (experiments.items()):
         if not path.exists():
             print(
                 f"Warning: missing "
@@ -534,7 +462,6 @@ def load_vae_generation_results():
             "r",
             encoding="utf-8",
         ) as file:
-
             results[name] = (
                 json.load(file)
             )
@@ -542,7 +469,6 @@ def load_vae_generation_results():
     return results
 
 def main():
-
     OUTPUT_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -664,7 +590,6 @@ def main():
         "w",
         encoding="utf-8",
     ) as file:
-
         json.dump(
             combined_results,
             file,
@@ -687,7 +612,6 @@ def main():
         newline="",
         encoding="utf-8",
     ) as file:
-
         writer = csv.writer(
             file
         )
@@ -705,7 +629,6 @@ def main():
             "ae",
             "vae",
         ]:
-
             writer.writerow(
                 [
                     model_name,

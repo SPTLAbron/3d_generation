@@ -18,45 +18,17 @@ from src.models.autoencoder import (
     Autoencoder3D,
 )
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available()
-    else "cpu"
-)
+CHECKPOINT = ROOT / "outputs" / "checkpoints" / "ae_best.pt"
 
-CHECKPOINT = (
-    ROOT
-    / "outputs"
-    / "checkpoints"
-    / "ae_best.pt"
-)
+LATENT_EDIT_ROOT = ROOT / "outputs" / "experiments" / "latent_edits"
 
-LATENT_EDIT_ROOT = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "latent_edits"
-)
+OUTPUT_PATH = ROOT / "outputs" / "experiments" / "disentanglement.csv"
 
-OUTPUT_PATH = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "disentanglement.csv"
-)
+MATRIX_PATH = ROOT / "outputs" / "experiments" / "disentanglement_matrix.csv"
 
-MATRIX_PATH = (
-    ROOT
-    / "outputs"
-    / "experiments"
-    / "disentanglement_matrix.csv"
-)
-
-
-def encode_loader(
-    model,
-    loader,
-):
+def encode_loader(model, loader):
     zs = []
     ys = []
 
@@ -86,15 +58,10 @@ def encode_loader(
     )
 
 
-def train_parameter_probes(
-    z_train,
-    y_train,
-):
+def train_parameter_probes(z_train, y_train):
     probes = {}
 
-    for i, parameter_name in enumerate(
-        PARAM_COLUMNS
-    ):
+    for i, parameter_name in enumerate(PARAM_COLUMNS):
         reg = LinearRegression()
 
         reg.fit(
@@ -108,11 +75,7 @@ def train_parameter_probes(
 
     return probes
 
-
-def predict_parameters(
-    probes,
-    z,
-):
+def predict_parameters(probes, z):
     z = np.asarray(
         z,
         dtype=np.float32,
@@ -158,18 +121,14 @@ def main():
 
     model.eval()
 
-    print(
-        "Encoding training set..."
-    )
+    print("Encoding training set...")
 
     z_train, y_train = encode_loader(
         model,
         train_loader,
     )
 
-    print(
-        "Training parameter probes..."
-    )
+    print("Training parameter probes...")
 
     probes = train_parameter_probes(
         z_train,
@@ -214,9 +173,7 @@ def main():
             )
             continue
 
-        baseline_z = np.load(
-            baseline_path
-        )
+        baseline_z = np.load(baseline_path)
 
         baseline_predictions = (
             predict_parameters(
@@ -225,11 +182,7 @@ def main():
             )
         )
 
-        for latent_path in sorted(
-            edit_dir.glob(
-                "alpha_*_latent.npy"
-            )
-        ):
+        for latent_path in sorted(edit_dir.glob("alpha_*_latent.npy")):
             name = latent_path.stem
 
             alpha_string = (
@@ -244,13 +197,9 @@ def main():
                 )
             )
 
-            alpha = float(
-                alpha_string
-            )
+            alpha = float(alpha_string)
 
-            z_edit = np.load(
-                latent_path
-            )
+            z_edit = np.load(latent_path)
 
             predictions = (
                 predict_parameters(
@@ -259,9 +208,7 @@ def main():
                 )
             )
 
-            for measured_parameter in (
-                PARAM_COLUMNS
-            ):
+            for measured_parameter in PARAM_COLUMNS:
                 baseline_value = (
                     baseline_predictions[
                         measured_parameter
@@ -313,9 +260,7 @@ def main():
                     }
                 )
 
-    df = pd.DataFrame(
-        rows
-    )
+    df = pd.DataFrame(rows)
 
     OUTPUT_PATH.parent.mkdir(
         parents=True,
@@ -353,9 +298,7 @@ def main():
         )
     )
 
-    matrix.to_csv(
-        MATRIX_PATH
-    )
+    matrix.to_csv(MATRIX_PATH)
 
     print(
         f"Saved summary matrix: "
@@ -384,9 +327,7 @@ def main():
         if edit_parameter not in matrix.index:
             continue
 
-        row = matrix.loc[
-            edit_parameter
-        ]
+        row = matrix.loc[edit_parameter]
 
         diagonal = abs(
             row[
@@ -413,8 +354,7 @@ def main():
             ratio = np.inf
         else:
             ratio = (
-                diagonal
-                / mean_cross_effect
+                diagonal / mean_cross_effect
             )
 
         ratio_rows.append(
@@ -438,12 +378,7 @@ def main():
         )
 
 
-    ratio_path = (
-        ROOT
-        / "outputs"
-        / "experiments"
-        / "disentanglement_ratios.csv"
-    )
+    ratio_path = ROOT / "outputs" / "experiments" / "disentanglement_ratios.csv"
 
     pd.DataFrame(
         ratio_rows

@@ -109,7 +109,6 @@ def train(
         total_kl = 0
 
         for x, _ in train_loader:
-
             x = x.to(DEVICE)
 
             optimizer.zero_grad()
@@ -157,7 +156,6 @@ def train(
         )
 
         if val_loss < best_val_loss:
-
             best_val_loss = val_loss
 
             torch.save(

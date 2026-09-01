@@ -8,34 +8,22 @@ ROOT = Path(__file__).resolve().parents[2]
 
 SAMPLE_DIRS = {
     "std = 1.0": (
-        ROOT
-        / "outputs"
-        / "experiments"
-        / "vae_samples"
+        ROOT / "outputs" / "experiments" / "vae_samples"
     ),
     "std = 0.7": (
-        ROOT
-        / "outputs"
-        / "experiments"
-        / "vae_samples_std_0.7"
+        ROOT / "outputs" / "experiments" / "vae_samples_std_0.7"
     ),
     "std = 0.5": (
-        ROOT
-        / "outputs"
-        / "experiments"
-        / "vae_samples_std_0.5"
+        ROOT / "outputs" / "experiments" / "vae_samples_std_0.5"
     ),
 }
 
 OUTPUT_DIR = (
-    ROOT
-    / "outputs"
-    / "renders"
+    ROOT / "outputs" / "renders"
 )
 
 OUTPUT_PATH = (
-    OUTPUT_DIR
-    / "vae_sampling_comparison.png"
+    OUTPUT_DIR / "vae_sampling_comparison.png"
 )
 
 THRESHOLD = 0.5
@@ -52,7 +40,6 @@ SAMPLE_INDICES = [
     81,
     99,
 ]
-
 
 def main():
     OUTPUT_DIR.mkdir(
@@ -77,13 +64,8 @@ def main():
     plot_index = 1
 
     for row_name, sample_dir in SAMPLE_DIRS.items():
-
         for sample_index in SAMPLE_INDICES:
-
-            path = (
-                sample_dir
-                / f"sample_{sample_index:03d}.npy"
-            )
+            path = sample_dir / f"sample_{sample_index:03d}.npy"
 
             if not path.exists():
                 raise FileNotFoundError(

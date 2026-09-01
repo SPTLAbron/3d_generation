@@ -2,12 +2,7 @@ import numpy as np
 import trimesh
 from pathlib import Path
 
-def cylinder_between_points(
-    start,
-    end,
-    radius,
-    sections=64,
-):
+def cylinder_between_points(start, end, radius, sections=64):
     start = np.asarray(start, dtype=float)
     end = np.asarray(end, dtype=float)
 
@@ -41,13 +36,6 @@ def create_trophy_body(
     sections=96,
     levels=30,  
 ):
-    """
-    Same trophy shape as before, but:
-    - no hollow interior
-    - straight/closed corners
-    - keeps the existing curved/slanted outer shape
-    """
-
     vertices = []
     faces = []
 
@@ -61,7 +49,6 @@ def create_trophy_body(
     )
     
     for level in range(levels):
-
         t = level / (levels - 1)
 
         z = t * height
@@ -78,7 +65,6 @@ def create_trophy_body(
         opening_shift = 0.30 * t
 
         for angle in angles:
-
             x = center_x + radius * np.cos(angle)
             y = radius * np.sin(angle)
 
@@ -94,12 +80,10 @@ def create_trophy_body(
             ])
 
     for level in range(levels - 1):
-
         current = level * sections
         nxt = (level + 1) * sections
 
         for i in range(sections - 1):
-
             a = current + i
             b = current + i + 1
 
@@ -110,7 +94,6 @@ def create_trophy_body(
             faces.append([a, d, c])
 
     for level in range(levels - 1):
-
         current = level * sections
         nxt = (level + 1) * sections
 
@@ -132,7 +115,6 @@ def create_trophy_body(
     ])
 
     for i in range(sections - 1):
-
         faces.append([
             bottom_center_index,
             i + 1,
@@ -158,7 +140,6 @@ def create_trophy_body(
     top_start = (levels - 1) * sections
 
     for i in range(sections - 1):
-
         faces.append([
             top_center_index,
             top_start + i,
@@ -179,7 +160,18 @@ def create_trophy_body(
 
     return mesh
 
-def generate_trophy(ball_radius=0.88, ball_offset=-0.90, support_sweep=0.28, body_height=2.85, body_bottom_radius=0.55, body_top_radius=0.86, lower_base_radius=1.25, lower_base_height=0.18, upper_base_radius=1.02, upper_base_height=0.16):
+def generate_trophy(
+    ball_radius=0.88, 
+    ball_offset=-0.90, 
+    support_sweep=0.28, 
+    body_height=2.85, 
+    body_bottom_radius=0.55, 
+    body_top_radius=0.86, 
+    lower_base_radius=1.25, 
+    lower_base_height=0.18, 
+    upper_base_radius=1.02, 
+    upper_base_height=0.16
+):
     lower_base = trimesh.creation.cylinder(radius=lower_base_radius, height=lower_base_height, sections=96)
     lower_base.apply_translation([0, 0, lower_base_height / 2])
 
