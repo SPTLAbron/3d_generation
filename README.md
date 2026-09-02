@@ -21,14 +21,14 @@ gradient-based shape optimization.
 
 ## Key Findings
 
-- The AE reconstructs held-out geometry with 0.9946 IoU; the VAE reaches
-  0.9870 IoU.
+- Both models reconstruct held-out geometry accurately. The AE reaches
+  0.9145 IoU, while the VAE achieves 0.9280 IoU.
 - Five known geometric properties are strongly linearly accessible in the
   learned latent space, with R² above 0.90.
 - Linear-probe directions support controllable edits, although the directions
   are not perfectly disentangled.
-- Reduced-variance VAE sampling produces substantially more connected
-  geometry than standard-normal sampling in this experiment.
+- Standard-normal VAE sampling remains unreliable despite strong
+  reconstruction performance, with 49% of generated samples empty.
 - Gradient-based latent optimization changes multiple predicted geometric
   objectives while preserving a coherent decoded shape.
 
@@ -129,12 +129,12 @@ reconstruction objective combined with KL regularization.
 
 | Model | BCE ↓ | IoU ↑ | Dice ↑ |
 |---|---:|---:|---:|
-| Autoencoder | 0.000980 | 0.9946 | 0.9973 |
-| VAE | 0.002329 | 0.9870 | 0.9934 |
+| Autoencoder | 0.019870 | 0.9145 | 0.9551 |
+| VAE | **0.016471** | **0.9280** | **0.9625** |
 
-The deterministic autoencoder provides the strongest reconstruction
-performance, while both models reconstruct unseen trophy geometry with
-high accuracy.
+Both models reconstruct held-out trophy geometry accurately. In the current
+evaluation, the VAE slightly outperforms the deterministic autoencoder on
+BCE, IoU, and Dice.
 
 ![AE and VAE reconstructions](docs/images/reconstructions.png)
 
@@ -143,7 +143,7 @@ high accuracy.
 
 ### Latent Interpolation
 
-![Autoencoder latent interpolation](docs/images/latent_interpolation.png)
+![Autoencoder latent interpolation](docs/images/latent_interpolation.gif)
 
 > **Latent interpolation.** Linear interpolation between two encoded test
 > trophies produces a sequence of intermediate decoded geometries.
@@ -172,25 +172,35 @@ accessible form, while others are substantially weaker.
 
 ### VAE Generation
 
-Generation quality was evaluated using connected-component statistics.
+Generation quality was evaluated by drawing 100 latent vectors from the
+standard-normal prior, `z ~ N(0, I)`, using random seed 42.
 
-| Latent sampling std | Mean largest component | Fully connected |
-|---:|---:|---:|
-| 1.0 | 0.4662 | 9% |
-| 0.7 | 0.9032 | 66% |
-| 0.5 | 0.9695 | 86% |
+| Metric | Result |
+|---|---:|
+| Samples | 100 |
+| Sampling standard deviation | 1.0 |
+| Empty samples | 49% |
+| Fully connected samples | 28% |
+| More than 99% in largest component | 29% |
+| More than 95% in largest component | 31% |
+| Mean largest-component fraction | 0.4483 |
 
-The standard-normal prior does not always produce coherent geometry.
-Reduced-variance sampling substantially improves connectivity.
+Although the VAE achieves good reconstruction accuracy, random generation
+from the standard-normal prior remains unreliable. Forty-nine of the 100
+samples were empty, and several nonempty samples contained only a very small
+number of occupied voxels.
 
-![VAE samples at different latent standard deviations](docs/images/vae_samples.png)
+These findings indicate that good reconstruction does not necessarily imply
+that arbitrary points drawn from the prior will decode into valid trophy
+geometry. The VAE should therefore be considered successful for reconstruction
+and latent-space analysis, but not yet a consistently reliable random shape
+generator.
 
-> **VAE generation.** Samples decoded at three latent standard deviations.
-> The same sample indices and rendering settings are used in every row.
+![VAE samples from the standard-normal prior](docs/images/vae_samples.png)
 
-The `std=0.5` experiment should be interpreted as reduced-variance
-sampling rather than as evidence that the learned posterior perfectly
-matches the standard-normal VAE prior.
+> **VAE generation.** Samples drawn from the standard-normal latent prior
+> using `SAMPLE_STD = 1.0`. The samples illustrate the variation in occupancy
+> and geometric connectivity.
 
 ### Latent Editing
 
@@ -311,10 +321,35 @@ Run latent-space optimization:
 python src/analysis/shape_optimization.py
 ```
 
-Train and evaluate the VAE:
+Train the VAE:
 
 ```bash
 python src/training/train_vae.py
+```
+
+The reported VAE used a maximum KL weight of `0.001` with a 20-epoch
+linear warmup. The final beta was reached at epoch 20:
+
+```text
+epoch 1:  beta=0.000050
+epoch 10: beta=0.000500
+epoch 20: beta=0.001000
+```
+
+The selected post-warmup checkpoint achieved:
+
+```text
+validation loss:           0.019664
+validation reconstruction: 0.016588
+validation KL:             3.076206
+```
+
+Analysis scripts load `outputs/checkpoints/vae_best.pt`. Random generation
+uses 100 samples, `SAMPLE_STD = 1.0`, and seed 42.
+
+Evaluate the VAE:
+
+```bash
 python src/analysis/check_vae_latent.py
 python src/analysis/sample_vae.py
 python src/analysis/evaluate_vae_samples.py
@@ -367,8 +402,9 @@ The latent representation is not perfectly disentangled. High linear
 predictability of a property does not imply that its latent direction
 changes only that property.
 
-The VAE also exhibits imperfect prior matching: standard-normal samples
-are less geometrically reliable than reduced-variance samples.
+The VAE also exhibits imperfect prior matching: standard-normal sampling
+produced 49% empty samples and only 28% fully connected samples.
+Reduced-variance sampling was not reevaluated using the final checkpoint.
 
 ## Future Work
 

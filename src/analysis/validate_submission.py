@@ -195,7 +195,7 @@ def main():
     )
 
     if not check(
-        len(interpolation_files) == 11,
+        len(interpolation_files) >= 30,
         f"AE interpolation contains "
         f"{len(interpolation_files)} steps",
     ):

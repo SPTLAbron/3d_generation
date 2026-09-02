@@ -24,6 +24,11 @@ PARAM_COLUMNS = [
     "lower_base_height",
     "upper_base_radius",
     "upper_base_height",
+    "body_bulge",
+    "body_twist",
+    "lobe_amplitude",
+    "lobe_count",
+    "opening_width",
 ]
 
 VOXEL_SIZE = 32

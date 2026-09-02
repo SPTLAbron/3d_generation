@@ -36,9 +36,9 @@ def vae_loss(logits, x, mu, logvar, beta=1e-3):
 def evaluate(model, loader, beta):
     model.eval()
 
-    total_loss = 0
-    total_recon = 0
-    total_kl = 0
+    total_loss = 0.0
+    total_recon = 0.0
+    total_kl = 0.0
 
     with torch.no_grad():
         for x, _ in loader:
@@ -54,32 +54,42 @@ def evaluate(model, loader, beta):
                 beta,
             )
 
-            n = len(x)
+            batch_size = len(x)
 
-            total_loss += loss.item() * n
-            total_recon += recon.item() * n
-            total_kl += kl.item() * n
+            total_loss += loss.item() * batch_size
+            total_recon += recon.item() * batch_size
+            total_kl += kl.item() * batch_size
 
-    n = len(loader.dataset)
+    dataset_size = len(loader.dataset)
 
     return (
-        total_loss / n,
-        total_recon / n,
-        total_kl / n,
+        total_loss / dataset_size,
+        total_recon / dataset_size,
+        total_kl / dataset_size,
     )
 
 
 def train(
-    epochs=100,
+    epochs=30,
     batch_size=16,
     lr=1e-3,
-    beta=1e-2,
+    beta=1e-3,
+    warmup_epochs=20,
+    patience=5,
+    min_improvement=1e-4,
 ):
+    print(f"Using device: {DEVICE}")
+    print(f"Epochs: {epochs}")
+    print(f"Maximum beta: {beta}")
+    print(f"KL warmup epochs: {warmup_epochs}")
+
     train_loader, val_loader, _, _, _, _ = get_loaders(
         batch_size
     )
 
-    model = VAE3D(latent_dim=32).to(DEVICE)
+    model = VAE3D(
+        latent_dim=32
+    ).to(DEVICE)
 
     optimizer = torch.optim.Adam(
         model.parameters(),
@@ -91,22 +101,23 @@ def train(
         exist_ok=True,
     )
 
+    best_warmup_recon = float("inf")
+
     best_val_loss = float("inf")
 
-    for epoch in range(1, epochs + 1):
-        
-        warmup_epochs = 20
+    epochs_without_improvement = 0
 
+    for epoch in range(1, epochs + 1):
         current_beta = beta * min(
             1.0,
-            epoch / warmup_epochs
+            epoch / warmup_epochs,
         )
 
         model.train()
 
-        total_loss = 0
-        total_recon = 0
-        total_kl = 0
+        total_loss = 0.0
+        total_recon = 0.0
+        total_kl = 0.0
 
         for x, _ in train_loader:
             x = x.to(DEVICE)
@@ -124,19 +135,31 @@ def train(
             )
 
             loss.backward()
+
+            torch.nn.utils.clip_grad_norm_(
+                model.parameters(),
+                max_norm=5.0,
+            )
+
             optimizer.step()
 
-            n = len(x)
+            current_batch_size = len(x)
 
-            total_loss += loss.item() * n
-            total_recon += recon.item() * n
-            total_kl += kl.item() * n
+            total_loss += (
+                loss.item() * current_batch_size
+            )
+            total_recon += (
+                recon.item() * current_batch_size
+            )
+            total_kl += (
+                kl.item() * current_batch_size
+            )
 
-        n = len(train_loader.dataset)
+        dataset_size = len(train_loader.dataset)
 
-        train_loss = total_loss / n
-        train_recon = total_recon / n
-        train_kl = total_kl / n
+        train_loss = total_loss / dataset_size
+        train_recon = total_recon / dataset_size
+        train_kl = total_kl / dataset_size
 
         val_loss, val_recon, val_kl = evaluate(
             model,
@@ -155,15 +178,86 @@ def train(
             f"val_kl={val_kl:.6f}"
         )
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if epoch < warmup_epochs:
+            if val_recon < best_warmup_recon:
+                best_warmup_recon = val_recon
 
-            torch.save(
-                model.state_dict(),
-                CHECKPOINT_DIR / "vae_best.pt",
+                torch.save(
+                    model.state_dict(),
+                    CHECKPOINT_DIR / "vae_warmup_best.pt",
+                )
+
+                print(
+                    "  saved best warmup reconstruction"
+                )
+
+        else:
+            if val_loss < best_val_loss - min_improvement:
+                best_val_loss = val_loss
+                epochs_without_improvement = 0
+
+                torch.save(
+                    model.state_dict(),
+                    CHECKPOINT_DIR / "vae_best.pt",
+                )
+
+                print("  saved new best VAE")
+            else:
+                epochs_without_improvement += 1
+
+                print(
+                    "  epochs without improvement: "
+                    f"{epochs_without_improvement}/"
+                    f"{patience}"
+                )
+
+            if val_kl < 0.05:
+                print(
+                    "Warning: validation KL is close to "
+                    "zero, indicating possible posterior "
+                    "collapse."
+                )
+
+            if epochs_without_improvement >= patience:
+                print(
+                    f"Early stopping at epoch {epoch}: "
+                    f"validation loss did not improve by "
+                    f"at least {min_improvement} for "
+                    f"{patience} epochs."
+                )
+                break
+
+    final_checkpoint = CHECKPOINT_DIR / "vae_best.pt"
+
+    if final_checkpoint.exists():
+        model.load_state_dict(
+            torch.load(
+                final_checkpoint,
+                map_location=DEVICE,
+            )
+        )
+
+        print(
+            f"Loaded best checkpoint: "
+            f"{final_checkpoint}"
+        )
+    else:
+        fallback_checkpoint = (
+            CHECKPOINT_DIR / "vae_warmup_best.pt"
+        )
+
+        if fallback_checkpoint.exists():
+            model.load_state_dict(
+                torch.load(
+                    fallback_checkpoint,
+                    map_location=DEVICE,
+                )
             )
 
-            print("  saved new best VAE")
+            print(
+                "No post-warmup checkpoint was created. "
+                f"Loaded fallback: {fallback_checkpoint}"
+            )
 
     return model
 

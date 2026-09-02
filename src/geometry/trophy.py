@@ -33,19 +33,22 @@ def create_trophy_body(
     bottom_radius=0.58,
     top_radius=0.92,
     support_sweep=0.28,
+    body_bulge=0.06,
+    body_twist=0.0,
+    lobe_amplitude=0.0,
+    lobe_count=3.0,
+    opening_width=76.0,
     sections=96,
     levels=30,  
 ):
     vertices = []
     faces = []
 
-    start_angle = np.radians(38)
-    end_angle = np.radians(322)
-
+    half_opening = np.radians(opening_width / 2)
     angles = np.linspace(
-        start_angle,
-        end_angle,
-        sections
+        half_opening,
+        2 * np.pi - half_opening,
+        sections,
     )
     
     for level in range(levels):
@@ -53,24 +56,32 @@ def create_trophy_body(
 
         z = t * height
 
-        radius = (
-            bottom_radius * (1 - t)
-            + top_radius * t
-        )
+        base_radius = (
+    bottom_radius * (1 - t)
+    + top_radius * t
+)
 
-        radius += 0.06 * np.sin(t * np.pi)
+        base_radius += body_bulge * np.sin(t * np.pi)
 
-        center_x = -support_sweep * t
-
+        center_x = -support_sweep * (t ** 1.35)
         opening_shift = 0.30 * t
+        twist = body_twist * t
 
         for angle in angles:
-            x = center_x + radius * np.cos(angle)
-            y = radius * np.sin(angle)
+            warped_angle = angle + twist
+
+            local_radius = base_radius * (
+                1.0
+                + lobe_amplitude
+                * np.sin(lobe_count * warped_angle + 2 * np.pi * t)
+            )
+
+            x = center_x + local_radius * np.cos(warped_angle)
+            y = local_radius * np.sin(warped_angle)
 
             z_actual = z
 
-            if np.cos(angle) > 0.45:
+            if np.cos(warped_angle) > 0.45:
                 z_actual -= opening_shift
 
             vertices.append([
@@ -170,7 +181,12 @@ def generate_trophy(
     lower_base_radius=1.25, 
     lower_base_height=0.18, 
     upper_base_radius=1.02, 
-    upper_base_height=0.16
+    upper_base_height=0.16,
+    body_bulge=0.06,
+    body_twist=0.0,
+    lobe_amplitude=0.0,
+    lobe_count=3.0,
+    opening_width=76.0,
 ):
     lower_base = trimesh.creation.cylinder(radius=lower_base_radius, height=lower_base_height, sections=96)
     lower_base.apply_translation([0, 0, lower_base_height / 2])
@@ -180,7 +196,19 @@ def generate_trophy(
 
     base_top = lower_base_height + upper_base_height
 
-    body = create_trophy_body(height=body_height, bottom_radius=body_bottom_radius, top_radius=body_top_radius, support_sweep=support_sweep, sections=96, levels=35)
+    body = create_trophy_body(
+        height=body_height,
+        bottom_radius=body_bottom_radius,
+        top_radius=body_top_radius,
+        support_sweep=support_sweep,
+        body_bulge=body_bulge,
+        body_twist=body_twist,
+        lobe_amplitude=lobe_amplitude,
+        lobe_count=lobe_count,
+        opening_width=opening_width,
+        sections=96,
+        levels=35,
+    )
     body.apply_translation([0, 0, base_top])
 
     rim_radius = body_top_radius

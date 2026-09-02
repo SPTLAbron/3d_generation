@@ -19,7 +19,7 @@ def evaluate(model,loader,loss_fn):
             x=x.to(DEVICE); total+=loss_fn(model(x),x).item()*len(x)
     return total/len(loader.dataset)
 
-def train(epochs=50,batch_size=16,lr=1e-3):
+def train(epochs=10,batch_size=16,lr=1e-3):
     train_loader,val_loader,_,_,_,_=get_loaders(batch_size)
     model=Autoencoder3D(32).to(DEVICE)
     

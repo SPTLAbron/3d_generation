@@ -10,21 +10,45 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.geometry.trophy import generate_trophy
 
 PARAMETER_RANGES = {
-    "ball_radius": (0.78, 0.98),
-    "ball_offset": (-0.92, -0.88),
-    "support_sweep": (0.22, 0.34),
-    "body_height": (2.65, 3.05),
-    "body_bottom_radius": (0.48, 0.62),
-    "body_top_radius": (0.78, 0.96),
-    "lower_base_radius": (1.10, 1.40),
-    "lower_base_height": (0.14, 0.22),
-    "upper_base_radius": (0.90, 1.12),
-    "upper_base_height": (0.12, 0.20),
+    "ball_radius": (0.45, 1.30),
+    "ball_offset": (-1.45, 0.25),
+    "support_sweep": (-0.45, 0.85),
+    "body_height": (1.40, 4.20),
+    "body_bottom_radius": (0.22, 1.05),
+    "body_top_radius": (0.32, 1.45),
+    "lower_base_radius": (0.65, 1.90),
+    "lower_base_height": (0.08, 0.48),
+    "upper_base_radius": (0.45, 1.55),
+    "upper_base_height": (0.06, 0.40),
+    "body_bulge": (-0.22, 0.45),
+    "body_twist": (-1.20, 1.20),
+    "lobe_amplitude": (0.0, 0.28),
+    "lobe_count": (2.0, 7.0),
+    "opening_width": (20.0, 150.0),
 }
 
-
+# really mess up the parameters
 def sample_parameters(rng):
-    params = {name: rng.uniform(low, high) for name, (low, high) in PARAMETER_RANGES.items()}
+    params = {}
+
+    for name, (low, high) in PARAMETER_RANGES.items():
+        unit_value = (
+            rng.betavariate(0.55, 0.55)
+            if rng.random() < 0.70
+            else rng.random()
+        )
+
+        params[name] = low + unit_value * (high - low)
+
+    params["lobe_count"] = float(
+        rng.choice([2, 3, 4, 5, 6, 7])
+    )
+
+    params["upper_base_radius"] = min(
+        params["upper_base_radius"],
+        params["lower_base_radius"] * rng.uniform(0.55, 0.95),
+    )
+
     return params
 
 
